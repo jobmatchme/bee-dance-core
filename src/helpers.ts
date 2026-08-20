@@ -29,6 +29,19 @@ export function createTurnStart(
 	};
 }
 
+export function getLastActionStatus(parts: Item["parts"]): import("./types.js").ActionStatus | undefined {
+	for (let index = parts.length - 1; index >= 0; index -= 1) {
+		const part = parts[index];
+		if (
+			part.kind === "status" &&
+			(part.status === "in_progress" || part.status === "complete" || part.status === "error")
+		) {
+			return part.status;
+		}
+	}
+	return undefined;
+}
+
 export function createItemAppended(
 	input: Omit<Envelope<{ item: Item }>, "type" | "name" | "id" | "time"> & Partial<Pick<Envelope, "id" | "time">>,
 ): Envelope<{ item: Item }> {

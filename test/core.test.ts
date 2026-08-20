@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 import {
+	type ActionItem,
 	assertMessageName,
 	assertValidEnvelope,
 	createApprovalRequested,
@@ -8,6 +9,7 @@ import {
 	createTurnStart,
 	dispatchMessage,
 	type Envelope,
+	getLastActionStatus,
 	negotiateCapabilities,
 	parseEnvelope,
 	supportsPartKind,
@@ -103,6 +105,33 @@ describe("bee-dance-core", () => {
 		expect(negotiated.coreVersions).toEqual(["2026-04-02"]);
 		expect(supportsProfile(hello.payload.capabilities, "profile.chat.slack")).toBe(true);
 		expect(supportsPartKind(hello.payload.capabilities, "text")).toBe(true);
+	});
+
+	it("models action updates with last-status-wins semantics", () => {
+		const action: ActionItem = {
+			id: "tool-call-1",
+			kind: "action",
+			role: "tool",
+			parts: [
+				{ kind: "text", text: "Datei lesen" },
+				{ kind: "text", text: "Konfiguration prüfen" },
+				{ kind: "status", status: "in_progress" },
+			],
+		};
+		const appended = createItemAppended({
+			sessionId: "sess_1",
+			turnId: "turn_1",
+			from: { kind: "agent", id: "agent:main" },
+			to: { kind: "human", id: "slack:user:U1" },
+			replyTo: null,
+			payload: { item: action },
+		});
+		const completion = [{ kind: "status" as const, status: "complete" }];
+
+		expect(appended.payload.item).toEqual(action);
+		expect(getLastActionStatus(action.parts)).toBe("in_progress");
+		expect(getLastActionStatus([...action.parts, ...completion])).toBe("complete");
+		expect(getLastActionStatus([...action.parts, ...completion, { kind: "status", status: "error" }])).toBe("error");
 	});
 
 	it("creates approval requests", () => {

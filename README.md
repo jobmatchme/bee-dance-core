@@ -59,6 +59,38 @@ Applications normally use this package together with the schema package to:
 - negotiate supported protocol features between peers
 - dispatch messages to handlers based on message names
 
+## Action-item lifecycle
+
+Tool executions are modeled without transport-specific concepts as `action`
+items with `role: "tool"`. A caller should use the concrete tool-call ID as the
+item ID so parallel and repeated calls remain independently correlatable.
+
+An `item.appended` starts the action. Its parts contain the user-facing static
+title, optionally a dynamic description, and an `in_progress` status in that
+order. An `item.updated` completes the same item by appending only a `complete`
+or `error` status part. Consumers evaluate status parts in event order; the
+last recognized action status wins. Completed events must not include tool
+results or raw error messages. This keeps the lifecycle reusable by Slack,
+web, and other transports while allowing each adapter to choose its UI.
+
+```ts
+const started = {
+  id: toolCallId,
+  kind: "action",
+  role: "tool",
+  parts: [
+    { kind: "text", text: "Datei lesen" },
+    { kind: "text", text: "Konfiguration prüfen" },
+    { kind: "status", status: "in_progress" },
+  ],
+};
+
+const completed = {
+  itemId: toolCallId,
+  appendParts: [{ kind: "status", status: "complete" }],
+};
+```
+
 ## Publishing
 
 The package is intended for public npm publication from GitHub Actions. A tag
