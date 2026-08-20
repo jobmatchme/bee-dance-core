@@ -4,6 +4,7 @@ export type Audience = "direct" | "channel" | "broadcast";
 export type Visibility = "private" | "shared" | "public";
 export type ItemKind = "message" | "thinking" | "artifact" | "status" | "question" | "action";
 export type ItemRole = "user" | "assistant" | "system";
+export type ActionStatus = "in_progress" | "complete" | "error";
 
 export interface ActorRef {
 	kind: ActorKind;
@@ -84,6 +85,17 @@ export interface Item {
 	references?: string[];
 	tags?: string[];
 	visibility?: Visibility;
+}
+
+/**
+ * A transport-neutral description of one externally visible action.
+ *
+ * Action state is represented by status parts. Consumers apply appended parts
+ * in order; when more than one action status exists, the last one wins.
+ */
+export interface ActionItem extends Item {
+	kind: "action";
+	role: "tool";
 }
 
 export interface Envelope<Payload = unknown> {
