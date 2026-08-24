@@ -34,6 +34,21 @@ describe("bee-dance-core", () => {
 		expect(turn.type).toBe("command");
 	});
 
+	it("rejects invalid RFC 3339 timestamps", () => {
+		const turn = createTurnStart({
+			sessionId: "sess_1",
+			turnId: "turn_1",
+			from: { kind: "human", id: "slack:user:U1" },
+			to: { kind: "agent", id: "agent:main" },
+			replyTo: null,
+			payload: {
+				input: [{ kind: "text", text: "Bitte analysiere das Repo." }],
+			},
+		});
+
+		expect(() => assertValidEnvelope({ ...turn, time: "2026-08-23 23:50:34" })).toThrow("format");
+	});
+
 	it("parses and dispatches a message", async () => {
 		const item = createItemAppended({
 			sessionId: "sess_1",
