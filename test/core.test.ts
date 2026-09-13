@@ -49,6 +49,42 @@ describe("bee-dance-core", () => {
 		expect(() => assertValidEnvelope({ ...turn, time: "2026-08-23 23:50:34" })).toThrow("format");
 	});
 
+	it("validates content-free run usage telemetry", () => {
+		const completed: Envelope = {
+			id: "msg_usage_1",
+			type: "event",
+			name: "run.completed",
+			time: new Date().toISOString(),
+			sessionId: "sess_1",
+			turnId: "turn_1",
+			from: { kind: "agent", id: "agent:bee-willy-test" },
+			payload: {
+				eventType: "run.completed",
+				stopReason: "completed",
+				usage: {
+					provider: "openai",
+					model: "gpt-5.6-sol",
+					reasoningEffort: "medium",
+					input: 1200,
+					output: 300,
+					cacheRead: 800,
+					cacheWrite: 0,
+					cost: {
+						status: "estimated",
+						currency: "USD",
+						input: 0.0048,
+						output: 0.006,
+						cacheRead: 0.00032,
+						cacheWrite: 0,
+						total: 0.01112,
+					},
+				},
+			},
+		};
+
+		assertValidEnvelope(completed);
+	});
+
 	it("parses and dispatches a message", async () => {
 		const item = createItemAppended({
 			sessionId: "sess_1",
